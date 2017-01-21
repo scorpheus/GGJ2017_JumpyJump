@@ -3,6 +3,14 @@ import gs
 import math
 
 
+def draw_triangle(scene_simple_graphic, p1, p2, p3, color):
+	scene_simple_graphic.Triangle(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, color, color, color)
+
+
+def draw_quad(scene_simple_graphic, p1, p2, p3, p4, color):
+	scene_simple_graphic.Quad(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z, 0, 0, 1, 1, None, color, color, color, color)
+
+
 def draw_spline(scene_simple_graphic, p1, p2, p3, p4, color):
 	P = [(p1.x, p1.y, p1.z), (p2.x, p2.y, p2.z), (p3.x, p3.y, p3.z), (p4.x, p4.y, p4.z)]
 
