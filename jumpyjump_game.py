@@ -103,8 +103,9 @@ waves = [
 	{"height":-3.5 * random.random(), "depth": 1.0, "color": gs.Color(0, random.random()*0.1, random.random())}
 ]
 score = 0
-failed = False
+failed = True
 
+failed_tex = plus.GetRendererAsync().LoadTexture("assets/failed.png")
 score_tex = plus.GetRendererAsync().LoadTexture("assets/score.png")
 character_tex_jump = plus.GetRendererAsync().LoadTexture("assets/jump.png")
 character_tex_no_jump = plus.GetRendererAsync().LoadTexture("assets/no_jump.png")
@@ -144,20 +145,20 @@ def update_character_anim():
 
 
 def show_failed():
-	pos = gs.Vector3(-1, 4.0, -0.9)
-	width = gs.Vector3(4, 0, 0)
-	height = gs.Vector3(0, 4, 0)
+	pos = gs.Vector3(0.8, 2.5, -0.5)
+	width = gs.Vector3(2, 0, 0)
+	height = gs.Vector3(0, 2, 0)
 	helper_2d.draw_quad(scene_simple_graphic,
 	                    pos - width -height,
 	                    pos - width + height,
 	                    pos + width + height,
 	                    pos + width - height,
 	                    gs.Color.White,
-	                    score_tex)
+	                    failed_tex)
 
 
 def update():
-	global last_spawn_time, waves, failed
+	global last_spawn_time, waves, failed, score
 
 	dt_sec = plus.UpdateClock()
 
@@ -174,20 +175,27 @@ def update():
 	for wave in reversed(waves):
 		wave["depth"] -= (math.pow(1.0-wave["depth"]/max_depth, 2) + 1.0) * (max_depth/(spawn_wave_every * nb_waves_max)) * dt_sec.to_sec()
 
+		if wave["depth"] < 0.05:
+			if not plus.KeyDown(gs.InputDevice.KeySpace):
+				failed = True
+
 		if wave["depth"] > 0:
 			create_wave(wave["height"], wave["depth"], wave["color"], depth_max=3.0, complexity=2)
 			waves_to_keep = [wave] + waves_to_keep
-
-		# if wave["depth"] <0.05 and not plus.KeyDown(gs.InputDevice.KeySpace):
-		# 	failed = True
+		else:
+			if not failed:
+				score += 1
 
 	waves = waves_to_keep
 	# print(len(waves))
 
-	if not failed:
-		update_character_anim()
-		score_ui()
-	else:
+	update_character_anim()
+	score_ui()
+
+	if failed:
 		show_failed()
+		if plus.KeyDown(gs.InputDevice.KeySpace):
+			failed = False
+			score = 0
 
 	plus.UpdateScene(scn, dt_sec)
