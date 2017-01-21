@@ -24,11 +24,12 @@ plus.SetBlend3D(gs.BlendAlpha)
 
 import jumpyjump_game
 import jumpyjump_slow_waves
+import jumpyjump_test_voronoi_wave
 
 # play_menu = True
 # playgame = False
 play_menu = False
-playgame = True
+playgame = False
 
 while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 
@@ -44,6 +45,7 @@ while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 	elif playgame:
 		jumpyjump_game.update()
 
+	jumpyjump_test_voronoi_wave.update()
 	plus.Flip()
 
 plus.RenderUninit()
