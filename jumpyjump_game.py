@@ -3,29 +3,10 @@ import gs
 import camera
 import helper_2d
 
-# mount the system file driver
-gs.MountFileDriver(gs.StdFileDriver())
-gs.LoadPlugins()
-
-# gs.SetDefaultLogOutputIsDetailed(True)
-# gs.SetDefaultLogOutputLevelMask(gs.LogLevelAll)
-
 plus = gs.GetPlus()
-plus.CreateWorkers()
-plus.AudioInit()
 
 font = gs.RasterFont("@core/fonts/default.ttf", 16)
 
-plus.RenderInit(1024, 768, 8, gs.Window.Windowed, False)
-
-gui = gs.GetDearImGui()
-gui.EnableMouseCursor(True)
-
-plus.GetRendererAsync().SetVSync(False)
-
-scn = None
-scene_simple_graphic = None
-cam = None
 camera_handler = camera.Camera()
 scn = plus.NewScene()
 
@@ -35,6 +16,11 @@ sky_script.Set("attenuation", 0.75)
 sky_script.Set("shadow_range", 1000.0) # 1km shadow range
 sky_script.Set("shadow_split", gs.Vector4(0.1, 0.2, 0.3, 0.4))
 scn.AddComponent(sky_script)
+
+plus.UpdateScene(scn, gs.time(0))
+lights = scn.GetNodesWithAspect("Light")
+for l in lights:
+	scn.RemoveNode(l)
 
 # add simple graphic, to draw 3D line
 scene_simple_graphic = gs.SimpleGraphicSceneOverlay(False)
@@ -46,14 +32,6 @@ camera_handler.reset(gs.Matrix4.TranslationMatrix(gs.Vector3(0.75, 2.59, -6.49))
 node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 0.1, 2, 4)
 render_sphere = node_sphere.GetObject().GetGeometry()
 scn.RemoveNode(node_sphere)
-
-plus.SetBlend2D(gs.BlendAlpha)
-plus.SetBlend3D(gs.BlendAlpha)
-
-plus.UpdateScene(scn, gs.time(0))
-lights = scn.GetNodesWithAspect("Light")
-for l in lights:
-	scn.RemoveNode(l)
 
 import random
 import numpy as np
@@ -94,38 +72,96 @@ def create_wave(height, depth, color, depth_max=3.0, complexity=3):
 		lines[-i-1] = [i-2, height+6]
 
 	# draw lines
-	alpha = (4* math.pow((1.0 - depth/(depth_max)),2) - 3 *math.pow((1.0 - depth/(depth_max)),50))/3.39
+	# alpha = 1.0#(4* math.pow((1.0 - depth/(depth_max)),2) - 3 *math.pow((1.0 - depth/(depth_max)),50))/3.39
+	alpha = 1.0-math.pow((1.0 - depth/(depth_max)) * 2.0 - 1.0, 10)
 	color = gs.Color(color.r, color.g, color.b, alpha)
 	color_line = gs.Color(0, 0.1, 0.8, alpha)
 	multipolygons = voronoi_cut(lines)
+
+	down_transition = (1.0-math.pow(depth/(depth_max), 10))*1
 
 	for polygon in multipolygons:
 		x, y = polygon.exterior.coords.xy
 		for i in range(len(x)-1):
 			# if y[i] < height+6 and y[i+1] < height+6:
-			helper_2d.draw_line(scene_simple_graphic, gs.Vector3(x[i], y[i], depth), gs.Vector3(x[i+1], y[i+1], depth), color_line)
+			helper_2d.draw_line(scene_simple_graphic, gs.Vector3(x[i], y[i]-down_transition, depth), gs.Vector3(x[i+1], y[i+1]-down_transition, depth), color_line)
 
 		if len(x) > 2:# and y[-1] < height+6 and y[0] < height+6:
-			helper_2d.draw_line(scene_simple_graphic, gs.Vector3(x[0], y[0], depth), gs.Vector3(x[-1], y[-1], depth), color_line)
+			helper_2d.draw_line(scene_simple_graphic, gs.Vector3(x[0], y[0]-down_transition, depth), gs.Vector3(x[-1], y[-1]-down_transition, depth), color_line)
 
 		for i in range(len(x)-2):
 			# if y[i] < height+6 and y[i+1] < height+6:
-			helper_2d.draw_triangle(scene_simple_graphic, gs.Vector3(x[0], y[0], depth), gs.Vector3(x[i+1], y[i+1], depth), gs.Vector3(x[i+2], y[i+2], depth), color)
-
+			helper_2d.draw_triangle(scene_simple_graphic, gs.Vector3(x[0], y[0]-down_transition, depth), gs.Vector3(x[i+1], y[i+1]-down_transition, depth), gs.Vector3(x[i+2], y[i+2]-down_transition, depth), color)
 
 
 temp_height = -3.5
 max_depth = 3.0
 nb_waves_max = 4
-spawn_wave_every = 5.0
+spawn_wave_every = 1.0
 last_spawn_time = 0
-waves = []
+waves = [
+	{"height":-3.5 * random.random(), "depth": 1.0, "color": gs.Color(0, random.random()*0.1, random.random())}
+]
+score = 0
+failed = False
 
-while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
+score_tex = plus.GetRendererAsync().LoadTexture("assets/score.png")
+character_tex_jump = plus.GetRendererAsync().LoadTexture("assets/jump.png")
+character_tex_no_jump = plus.GetRendererAsync().LoadTexture("assets/no_jump.png")
+
+
+def score_ui():
+	pos = gs.Vector3(-1, 4.0, -0.9)
+	width = gs.Vector3(0.2, 0, 0)
+	height = gs.Vector3(0, 0.2, 0)
+	helper_2d.draw_quad(scene_simple_graphic,
+	                    pos - width -height,
+	                    pos - width + height,
+	                    pos + width + height,
+	                    pos + width - height,
+	                    gs.Color.White,
+	                    score_tex)
+
+	scene_simple_graphic.Text(-1.05, 4.05, -1, "{}".format(score), gs.Color(), font, 0.01)
+
+
+def update_character_anim():
+	character_width = gs.Vector3(1, 0, 0)
+	character_height = gs.Vector3(0, 1, 0)
+	if plus.KeyDown(gs.InputDevice.KeySpace):
+		pos = gs.Vector3(0.5, 3.0, 0)
+		character_tex = character_tex_jump
+	else:
+		pos = gs.Vector3(0.5, 1.5, 0)
+		character_tex = character_tex_no_jump
+	helper_2d.draw_quad(scene_simple_graphic,
+	                    pos - character_width - character_height,
+	                    pos - character_width + character_height,
+	                    pos + character_width + character_height,
+	                    pos + character_width - character_height,
+	                    gs.Color.White,
+	                    character_tex)
+
+
+def show_failed():
+	pos = gs.Vector3(-1, 4.0, -0.9)
+	width = gs.Vector3(4, 0, 0)
+	height = gs.Vector3(0, 4, 0)
+	helper_2d.draw_quad(scene_simple_graphic,
+	                    pos - width -height,
+	                    pos - width + height,
+	                    pos + width + height,
+	                    pos + width - height,
+	                    gs.Color.White,
+	                    score_tex)
+
+
+def update():
+	global last_spawn_time, waves, failed
 
 	dt_sec = plus.UpdateClock()
 
-	camera.update_camera_move(dt_sec, camera_handler, gui, cam, None)
+	camera.update_camera_move(dt_sec, camera_handler, None, cam, None)
 
 	# check if spawn waves
 	last_spawn_time -= dt_sec.to_sec()
@@ -136,17 +172,22 @@ while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 	# draw waves
 	waves_to_keep = []
 	for wave in reversed(waves):
-		wave["depth"] -= (max_depth/(spawn_wave_every * nb_waves_max)) * dt_sec.to_sec()
+		wave["depth"] -= (math.pow(1.0-wave["depth"]/max_depth, 2) + 1.0) * (max_depth/(spawn_wave_every * nb_waves_max)) * dt_sec.to_sec()
 
 		if wave["depth"] > 0:
 			create_wave(wave["height"], wave["depth"], wave["color"], depth_max=3.0, complexity=2)
 			waves_to_keep = [wave] + waves_to_keep
 
+		# if wave["depth"] <0.05 and not plus.KeyDown(gs.InputDevice.KeySpace):
+		# 	failed = True
+
 	waves = waves_to_keep
 	# print(len(waves))
 
+	if not failed:
+		update_character_anim()
+		score_ui()
+	else:
+		show_failed()
+
 	plus.UpdateScene(scn, dt_sec)
-
-	plus.Flip()
-
-plus.RenderUninit()

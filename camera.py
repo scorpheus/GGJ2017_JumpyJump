@@ -301,6 +301,6 @@ def update_camera_teleporter(scn, scene_simple_graphic, cam, use_vr, authorise_g
 
 def update_camera_move(dt_sec, camera_handler, gui, cam, use_vr):
 	controller0 = gs.GetInputSystem().GetDevice("openvr_controller_0")
-	if not gui.WantCaptureMouse():
+	if gui is None or not gui.WantCaptureMouse():
 		if use_vr is None or controller0 is None:
 			camera_handler.update(cam, dt_sec.to_sec())

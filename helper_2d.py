@@ -7,8 +7,8 @@ def draw_triangle(scene_simple_graphic, p1, p2, p3, color):
 	scene_simple_graphic.Triangle(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, color, color, color)
 
 
-def draw_quad(scene_simple_graphic, p1, p2, p3, p4, color):
-	scene_simple_graphic.Quad(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z, 0, 0, 1, 1, None, color, color, color, color)
+def draw_quad(scene_simple_graphic, p1, p2, p3, p4, color, tex=None, uv_s=gs.Vector2(0, 0), uv_e=gs.Vector2(1, 1)):
+	scene_simple_graphic.Quad(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z, uv_s.x, uv_s.y, uv_e.x, uv_e.y, tex, color, color, color, color)
 
 
 def draw_spline(scene_simple_graphic, p1, p2, p3, p4, color):

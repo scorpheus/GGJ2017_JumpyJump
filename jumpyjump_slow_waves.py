@@ -3,29 +3,8 @@ import gs
 import camera
 import helper_2d
 
-# mount the system file driver
-gs.MountFileDriver(gs.StdFileDriver())
-gs.LoadPlugins()
-
-# gs.SetDefaultLogOutputIsDetailed(True)
-# gs.SetDefaultLogOutputLevelMask(gs.LogLevelAll)
-
 plus = gs.GetPlus()
-plus.CreateWorkers()
-plus.AudioInit()
 
-font = gs.RasterFont("@core/fonts/default.ttf", 16)
-
-plus.RenderInit(1024, 768, 8, gs.Window.Windowed, False)
-
-gui = gs.GetDearImGui()
-gui.EnableMouseCursor(True)
-
-plus.GetRendererAsync().SetVSync(False)
-
-scn = None
-scene_simple_graphic = None
-cam = None
 camera_handler = camera.Camera()
 scn = plus.NewScene()
 
@@ -36,12 +15,17 @@ sky_script.Set("shadow_range", 1000.0) # 1km shadow range
 sky_script.Set("shadow_split", gs.Vector4(0.1, 0.2, 0.3, 0.4))
 scn.AddComponent(sky_script)
 
+plus.UpdateScene(scn, gs.time(0))
+lights = scn.GetNodesWithAspect("Light")
+for l in lights:
+	scn.RemoveNode(l)
+
 # add simple graphic, to draw 3D line
 scene_simple_graphic = gs.SimpleGraphicSceneOverlay(False)
 scn.AddComponent(scene_simple_graphic)
 
 cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)))
-camera_handler.reset(gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)), 10, cam)
+camera_handler.reset(gs.Matrix4.TransformationMatrix((3.3167, 1.8287, -6.5168), (0.3149, -0.0965, 0)), 10, cam)
 node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 0.1, 2, 4)
 render_sphere = node_sphere.GetObject().GetGeometry()
 scn.RemoveNode(node_sphere)
@@ -61,10 +45,14 @@ zyx = np.reshape(zyx, (nx * ny * nz, 3))
 vec_runaway = np.random.rand(zyx.shape[0], zyx.shape[1]) * 0.1
 
 distance_stay_safe = 0.1
+apply_force_counter = 0.0
 
-while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 
+def update():
+	global zyx, vec_runaway, apply_force_counter
 	dt_sec = plus.UpdateClock()
+
+	apply_force_counter -= dt_sec.to_sec()
 
 	# i[:, 0] = math.cos(plus.GetClock().to_sec())
 	# i = signal.convolve(i, k, mode='same')
@@ -119,9 +107,12 @@ while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 	#max force
 	# vec_runaway = np.clip(vec_runaway, -1, 1)
 
-	if plus.KeyDown(gs.InputDevice.KeyW):
+	if plus.KeyDown(gs.InputDevice.KeyW) or apply_force_counter < 0:
 		vec_runaway[np.where(zyx[:, 0] <= 2)[0], 0] += 0.6
 		vec_runaway[np.where(zyx[:, 0] <= 2)[0], 1] += 0.01
+
+		if apply_force_counter < -0.2:
+			apply_force_counter = 2.0
 
 	#wall
 	bouncing_wall = 2
@@ -167,9 +158,6 @@ while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 		scn.GetRenderableSystem().DrawGeometry(render_sphere, gs.Matrix4.TranslationMatrix((zyx[i][0] * scale, zyx[i][1] * scale, zyx[i][2] * scale)))
 		# helper_2d.draw_cross(scene_simple_graphic, gs.Vector3(zyx[i][0]*scale, zyx[i][1]*scale, zyx[i][2]*scale), gs.Color.White, 0.1)
 
-	camera.update_camera_move(dt_sec, camera_handler, gui, cam, None)
+	# camera.update_camera_move(dt_sec, camera_handler, None, cam, None)
 	plus.UpdateScene(scn, dt_sec)
 
-	plus.Flip()
-
-plus.RenderUninit()
