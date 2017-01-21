@@ -17,7 +17,7 @@ def draw_spline(scene_simple_graphic, p1, p2, p3, p4, color):
 			prev_value = val
 
 
-def draw_line(scene_simple_graphic, a, b, color):
+def draw_line(scene_simple_graphic, a, b, color=gs.Color.White):
 	scene_simple_graphic.Line(a.x, a.y, a.z,
 	                          b.x, b.y, b.z, color, color)
 
