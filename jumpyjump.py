@@ -22,14 +22,14 @@ plus.GetRendererAsync().SetVSync(False)
 plus.SetBlend2D(gs.BlendAlpha)
 plus.SetBlend3D(gs.BlendAlpha)
 
-import jumpyjump_game
+import jumpyjump_game2
 import jumpyjump_slow_waves
 import jumpyjump_test_voronoi_wave
 
 # play_menu = True
 # playgame = False
 play_menu = False
-playgame = False
+playgame = True
 
 while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 
@@ -43,9 +43,9 @@ while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 		gui.End()
 		jumpyjump_slow_waves.update()
 	elif playgame:
-		jumpyjump_game.update()
+		jumpyjump_game2.update()
 
-	jumpyjump_test_voronoi_wave.update()
+	# jumpyjump_test_voronoi_wave.update()
 	plus.Flip()
 
 plus.RenderUninit()

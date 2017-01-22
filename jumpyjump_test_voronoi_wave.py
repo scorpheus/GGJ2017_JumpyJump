@@ -27,7 +27,7 @@ scn.AddComponent(scene_simple_graphic)
 
 cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)))
 camera_handler.reset(gs.Matrix4.TranslationMatrix(gs.Vector3(0.75, 2.59, -6.49)), 10, cam)
-node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 0.1, 2, 4)
+node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 1.0)
 render_sphere = node_sphere.GetObject().GetGeometry()
 scn.RemoveNode(node_sphere)
 
@@ -63,9 +63,9 @@ amplitude[:] = 0.1
 phase_const = np.ones((nb_particles))
 phase_const[:] = 10
 direction = np.zeros((nb_particles, 3.))
-direction[:, 0] = 0.5
-direction[:, 1] = 0.3
-direction[:, 2] = 0.3
+direction[:, 0] = 0.5 + random.random()*0.8-0.4
+direction[:, 1] = 0.3 + random.random()*0.8-0.4
+direction[:, 2] = 0.3 + random.random()*0.8-0.4
 w = np.ones((nb_particles))
 
 position = np.mgrid[0.:nb_base_particles:1, 0.:1.:1, 0.:nb_base_particles:1].T
@@ -104,7 +104,8 @@ def create_wave(height, depth, color, depth_max=3.0, complexity=3):
 		position[i, 2] += (steepness[i] * amplitude[i]) * direction[i, 2] * np.cos(w[i] * (np.dot(direction[i], position[i])) + phase_const[i] * plus.GetClock().to_sec())
 
 	for pos in position:
-		helper_2d.draw_cross(scene_simple_graphic, gs.Vector3(pos[0], pos[1], pos[2]), gs.Color.White)
+		# helper_2d.draw_cross(scene_simple_graphic, gs.Vector3(pos[0], pos[1], pos[2]), gs.Color.White)
+		scn.GetRenderableSystem().DrawGeometry(render_sphere, gs.Matrix4.TranslationMatrix((pos[0], pos[1], pos[2])))
 
 
 	# draw lines
