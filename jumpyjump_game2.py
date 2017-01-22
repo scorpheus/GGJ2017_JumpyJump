@@ -160,7 +160,7 @@ def score_ui():
 	                    gs.Color.White,
 	                    score_tex)
 
-	scene_simple_graphic.Text(-1.05, 4.05, -1, "{}".format(score), gs.Color(), font, 0.01)
+	scene_simple_graphic.Text(-0.9, 3.9, -1, "{}".format(score), gs.Color(), font, 0.01)
 
 
 def update_character_anim():
@@ -199,11 +199,11 @@ def show_failed():
 	                    failed_tex)
 
 for i in range(int(max_depth)):
-	waves.append({"height": -1.0, "depth": i*3, "color": gs.Color(0, random.random()*0.1, random.random()*0.5+0.5)})
+	waves.append({"height": -1.0, "depth": i*3, "color":  gs.Color(0, 0, 0.4)})#gs.Color(0, random.random()*0.1, random.random()*0.5+0.5)})
 
 
 def update():
-	global last_spawn_time, failed, score, current_wave
+	global last_spawn_time, failed, score, current_wave, spawn_wave_every
 
 	dt_sec = plus.UpdateClock()
 
@@ -211,25 +211,27 @@ def update():
 
 	last_spawn_time -= dt_sec.to_sec()
 	if last_spawn_time < 0:
-		current_wave -= 1
 
-		if not failed and current_wave == 16//3 and plus.KeyDown(gs.InputDevice.KeySpace):
+		if not failed and current_wave == 15//3 and plus.KeyDown(gs.InputDevice.KeySpace):
 			score += 1
 
+		current_wave -= 1
 		if current_wave < 0:
 			current_wave = len(waves)-1
+			spawn_wave_every *= 0.8
 		last_spawn_time = spawn_wave_every
 
 	# draw waves
 	# print(current_wave)
 	for id, wave in enumerate(waves):
 		if current_wave == id:
-			create_wave(wave["height"] + 2, wave["depth"], wave["color"], max_depth)
+			create_wave(wave["height"] + 2, wave["depth"], gs.Color(0, 0, 1), max_depth)
 		else:
 			create_wave(wave["height"], wave["depth"], wave["color"], max_depth)
 
 	if not failed and current_wave == 15//3 and not plus.KeyDown(gs.InputDevice.KeySpace):
 		failed = True
+		spawn_wave_every = 0.1
 
 	update_character_anim()
 	score_ui()

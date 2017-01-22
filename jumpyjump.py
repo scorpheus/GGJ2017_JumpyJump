@@ -42,6 +42,7 @@ while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 				playgame = True
 				jumpyjump_game2.failed = False
 				jumpyjump_game2.score = 0
+				jumpyjump_game2.spawn_wave_every = 0.1
 		gui.End()
 		jumpyjump_slow_waves.update()
 	elif playgame:
