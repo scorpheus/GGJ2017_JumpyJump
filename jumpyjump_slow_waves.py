@@ -33,6 +33,9 @@ scn.RemoveNode(node_sphere)
 node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 0.1, 2, 4, "assets/material_diffuse_color_red.mat")
 render_sphere_red = node_sphere.GetObject().GetGeometry()
 scn.RemoveNode(node_sphere)
+node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 0.1, 2, 4, "assets/material_diffuse_color_green.mat")
+render_sphere_green = node_sphere.GetObject().GetGeometry()
+scn.RemoveNode(node_sphere)
 
 import numpy as np
 
@@ -48,21 +51,6 @@ vec_runaway = np.random.rand(zyx.shape[0], zyx.shape[1]) * 0.1
 
 distance_stay_safe = 0.1
 apply_force_counter = 0.0
-
-
-def rayPlaneIntersect(rayorigin, in_raydirection, planeorigin, in_planenormal):
-	'''''
-	@returns: Vector3, intersectionPoint-rayOrigin
-	'''
-	raydirection = in_raydirection.Normalized()
-	planenormal = in_planenormal.Normalized()
-	distanceToPlane = (rayorigin-planeorigin).Dot(planenormal)
-	triangleHeight = raydirection.Dot(planenormal * -1.0)
-	if not distanceToPlane:
-		return rayorigin-planeorigin
-	if not triangleHeight:
-		return None #ray is parallel to plane
-	return raydirection * distanceToPlane * (1.0/triangleHeight)
 
 
 def update():
@@ -81,13 +69,15 @@ def update():
 	if plus.KeyDown(gs.InputDevice.KeyD):
 		vec_runaway[0, 0] += 2
 
-	success, point_mouse = gs.Unproject(cam.GetTransform().GetWorld(), cam.GetCamera().GetZoomFactor(), plus.GetRendererAsync().GetAspectRatio().get(), gs.Vector3(plus.GetMousePos()[0], plus.GetMousePos()[1], 1))
+	viewport = plus.GetRendererAsync().GetViewport().get()
+	success, point_mouse = gs.Unproject(cam.GetTransform().GetWorld(), cam.GetCamera().GetZoomFactor(), plus.GetRendererAsync().GetAspectRatio().get(), gs.Vector3(plus.GetMousePos()[0]/viewport.ex, 1.0-plus.GetMousePos()[1]/viewport.ey, 1))
 
-	ground_pos = rayPlaneIntersect(cam.GetTransform().GetPosition(), (point_mouse - cam.GetTransform().GetPosition()).Normalized(), gs.Vector3(0, 0, 0), gs.Vector3(0,1,0))
-	# d = gs.Vector3(0, 1, 0).Dot(cam.GetTransform().GetPosition() * -1.0) / gs.Vector3(0, 1, 0).Dot(point_mouse - cam.GetTransform().GetPosition())
-	# ground_pos = cam.GetTransform().GetPosition() + (point_mouse - cam.GetTransform().GetPosition()).Normalized() * d
+	d = gs.Vector3(0, 1, 0).Dot(gs.Vector3(0, 0, 0)-cam.GetTransform().GetPosition()) / gs.Vector3(0, 1, 0).Dot(point_mouse - cam.GetTransform().GetPosition())
+	ground_pos = cam.GetTransform().GetPosition() + (point_mouse - cam.GetTransform().GetPosition()).Normalized() * d
 
-	helper_2d.draw_cross(scene_simple_graphic, ground_pos, gs.Color.White, 5)
+	scn.GetRenderableSystem().DrawGeometry(render_sphere_green, gs.Matrix4.TranslationMatrix(ground_pos))
+	ground_pos /= scale
+
 	for i in range(zyx.shape[0]):
 		diff_xyz = zyx - zyx[i]
 		dist_diff_xyz = diff_xyz[:, 0] ** 2 + diff_xyz[:, 1] ** 2 + diff_xyz[:, 2] ** 2
@@ -101,6 +91,9 @@ def update():
 		# repulse more from the particle 0
 		if dist_diff_xyz[0] < 0.5:
 			vec_runaway[i] += diff_xyz[0] * -1.0
+
+	vec_a = (gs.Vector3(ground_pos.x, zyx[0][1], ground_pos.z) - gs.Vector3(zyx[0][0], zyx[0][1], zyx[0][2])).Normalized()
+	vec_runaway[0] += [vec_a.x, vec_a.y, vec_a.z]
 
 	# bounce on the wave
 	ground_height = np.cos(zyx[:, 0] *4 + plus.GetClock().to_sec()*1) * np.sin(zyx[:, 2] *4 + plus.GetClock().to_sec()) * 0.1

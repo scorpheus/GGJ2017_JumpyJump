@@ -12,7 +12,7 @@ plus = gs.GetPlus()
 plus.CreateWorkers()
 plus.AudioInit()
 
-plus.RenderInit(1024, 768, 8, gs.Window.Windowed, False)
+plus.RenderInit(1920, 1080, 8, gs.Window.Windowed, False)
 
 gui = gs.GetDearImGui()
 gui.EnableMouseCursor(True)

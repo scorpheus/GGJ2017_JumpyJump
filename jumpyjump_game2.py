@@ -188,8 +188,9 @@ def update_character_anim():
 
 def show_failed():
 	pos = gs.Vector3(0, 0, 0)
-	width = gs.Vector3(1024, 0, 0)
-	height = gs.Vector3(0, 768, 0)
+	viewport = plus.GetRendererAsync().GetViewport().get()
+	width = gs.Vector3(viewport.ex, 0, 0)
+	height = gs.Vector3(0, viewport.ey, 0)
 	helper_2d.draw_quad(scene_simple_graphic_2d,
 	                    pos,
 	                    pos + height,
@@ -199,7 +200,7 @@ def show_failed():
 	                    failed_tex)
 
 for i in range(int(max_depth)):
-	waves.append({"height": -1.0, "depth": i*3, "color":  gs.Color(0, 0, 0.4)})#gs.Color(0, random.random()*0.1, random.random()*0.5+0.5)})
+	waves.append({"height": -1.0, "depth": i*3, "color":  gs.Color(0, 0, (i/max_depth)*0.8+0.2)})#gs.Color(0, random.random()*0.1, random.random()*0.5+0.5)})
 
 
 def update():
