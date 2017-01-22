@@ -24,25 +24,32 @@ plus.SetBlend3D(gs.BlendAlpha)
 
 import jumpyjump_game2
 import jumpyjump_slow_waves
-import jumpyjump_test_voronoi_wave
+# import jumpyjump_test_voronoi_wave
 
-# play_menu = True
-# playgame = False
-play_menu = False
-playgame = True
+play_menu = True
+playgame = False
+# play_menu = False
+# playgame = True
 
 while not plus.IsAppEnded(plus.EndOnDefaultWindowClosed):
 
 	dt_sec = plus.UpdateClock()
 
 	if play_menu:
-		if gui.Begin("GUI"):
+		if gui.Begin("JumpyJump"):
 			if gui.Button("Play !!"):
 				play_menu = False
 				playgame = True
+				jumpyjump_game2.failed = False
+				jumpyjump_game2.score = 0
 		gui.End()
 		jumpyjump_slow_waves.update()
 	elif playgame:
+		if gui.Begin("exit"):
+			if gui.Button("Exit !!"):
+				play_menu = True
+				playgame = False
+		gui.End()
 		jumpyjump_game2.update()
 
 	# jumpyjump_test_voronoi_wave.update()

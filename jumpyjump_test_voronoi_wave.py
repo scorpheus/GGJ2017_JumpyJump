@@ -54,30 +54,48 @@ def voronoi_cut(points):
 	convex_hull = MultiPoint([Point(i) for i in points]).convex_hull.buffer(2)
 	return MultiPolygon([poly.intersection(convex_hull) for poly in polygonize(lines)])
 
-nb_base_particles = 30.
-nb_particles = nb_base_particles*nb_base_particles
-steepness = np.ones((nb_particles))
-steepness[:] = 0.9
-amplitude = np.ones((nb_particles))
-amplitude[:] = 0.1
-phase_const = np.ones((nb_particles))
-phase_const[:] = 10
-direction = np.zeros((nb_particles, 3.))
-direction[:, 0] = 0.5 + random.random()*0.8-0.4
-direction[:, 1] = 0.3 + random.random()*0.8-0.4
-direction[:, 2] = 0.3 + random.random()*0.8-0.4
-w = np.ones((nb_particles))
 
-position = np.mgrid[0.:nb_base_particles:1, 0.:1.:1, 0.:nb_base_particles:1].T
-position = np.reshape(position, (nb_particles, 3))
+class GerstnerWaves:
+	def __init__(self, height):
+		self.scale = 10.
+		self.height = height
+		self.nb_base_particles = 10.
+		self.nb_particles = self.nb_base_particles*self.nb_base_particles
+		self.steepness = np.ones((self.nb_particles))
+		self.steepness[:] = 0.2
+		self.amplitude = np.ones((self.nb_particles))
+		self.amplitude[:] = 0.5
+		self.phase_const = np.ones((self.nb_particles))
+		self.phase_const[:] = 15
+		self.direction = np.zeros((self.nb_particles, 3.))
+		self.direction[:, 0] = 0.1 #+ random.random()*0.8-0.4
+		self.direction[:, 1] = 0.4 #+ random.random()*0.8-0.4
+		self.direction[:, 2] = 0.5 #+ random.random()*0.8-0.4
+		self.w = np.ones((self.nb_particles))
 
-# a = np.arange(float(math.sqrt(nb_particles)))
-# x, y = np.meshgrid(a, a)
-# position = np.dstack((y, x))
-# position = np.reshape(position, (nb_particles, 2))
+		self.position = np.mgrid[0.:self.nb_base_particles:1, 0.:1.:1., 0.:self.nb_base_particles:1].T
+		self.position = np.reshape(self.position, (self.nb_particles, 3))
+		self.position *= self.scale
 
+		# a = np.arange(float(math.sqrt(nb_particles)))
+		# x, y = np.meshgrid(a, a)
+		# position = np.dstack((y, x))
+		# position = np.reshape(position, (nb_particles, 2))
 
+	def update(self):
+		dt_sec = plus.GetClock().to_sec()
+		for i in range(self.position.shape[0]):
+			self.position[i, 0] += (self.steepness[i] * self.amplitude[i]) * self.direction[i, 0] * np.cos(self.w[i] * (np.dot(self.direction[i], self.position[i])) + self.phase_const[i] * dt_sec)
+			self.position[i, 1] += (self.steepness[i] * self.amplitude[i]) * self.direction[i, 1] * np.cos(self.w[i] * (np.dot(self.direction[i], self.position[i])) + self.phase_const[i] * dt_sec)
+			self.position[i, 2] += (self.steepness[i] * self.amplitude[i]) * self.direction[i, 2] * np.cos(self.w[i] * (np.dot(self.direction[i], self.position[i])) + self.phase_const[i] * dt_sec)
 
+		for pos in self.position:
+			helper_2d.draw_cross(scene_simple_graphic, gs.Vector3(pos[0]/self.scale + self.height*0.5, pos[1]/self.scale+self.height, pos[2]/self.scale + self.height*0.5), gs.Color.White)
+			# scn.GetRenderableSystem().DrawGeometry(render_sphere, gs.Matrix4.TranslationMatrix((pos[0], pos[1]+self.height, pos[2])))
+
+waves = []
+for i in range(2):
+	waves.append(GerstnerWaves(i))
 
 def create_wave(height, depth, color, depth_max=3.0, complexity=3):
 	global steepness, amplitude, direction, w, position, phase_const
@@ -138,7 +156,9 @@ def update():
 
 	camera.update_camera_move(dt_sec, camera_handler, None, cam, None)
 
-	create_wave(3, 1.5, gs.Color(0.05, 0.847, 0.745), depth_max=3.0, complexity=2)
+	for wave in waves:
+		wave.update()
+	# create_wave(3, 1.5, gs.Color(0.05, 0.847, 0.745), depth_max=3.0, complexity=2)
 
 
 	plus.UpdateScene(scn, dt_sec)
