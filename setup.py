@@ -23,7 +23,7 @@ def gather_extra_redist():
 extra_redist = gather_extra_redist()
 
 includes      = []
-include_files = ["assets", "bspline.py", "camera.py", "helper_2d.py", "jumpyjump_game2.py", "jumpyjump_slow_waves.py"] + extra_redist
+include_files = ["assets", "C:\\Anaconda3\\Lib\\site-packages\\numpy", "C:\\Anaconda3\\Lib\\site-packages\\scipy"] + extra_redist
 
 # Dependencies are automatically detected, but it might need fine tuning.
 options = {
