@@ -39,28 +39,26 @@ node_sphere = plus.AddSphere(scn, gs.Matrix4.Identity, 0.1, 2, 4)
 render_sphere = node_sphere.GetObject().GetGeometry()
 scn.RemoveNode(node_sphere)
 
-import random
-import numpy as np
 import math
-from shapely.ops import polygonize
-from shapely.geometry import LineString, MultiPolygon, MultiPoint, Point
 from scipy.spatial import Voronoi
-
-
-def voronoi_cut(points):
-	vor = Voronoi(points)
-
-	lines = [
-	    LineString(vor.vertices[line])
-	    for line in vor.ridge_vertices if -1 not in line
-	]
-
-	# pts = MultiPoint([Point(i) for i in points])
-	# mask = pts.convex_hull.union(pts.buffer(10, resolution=1, cap_style=3))
-	# return MultiPolygon([poly.intersection(mask) for poly in polygonize(lines)])
-
-	convex_hull = MultiPoint([Point(i) for i in points]).convex_hull.buffer(1)
-	return MultiPolygon([poly.intersection(convex_hull) for poly in polygonize(lines)])
+# from shapely.ops import polygonize
+# from shapely.geometry import LineString, MultiPolygon, MultiPoint, Point
+#
+#
+# def voronoi_cut(points):
+# 	vor = Voronoi(points)
+#
+# 	lines = [
+# 	    LineString(vor.vertices[line])
+# 	    for line in vor.ridge_vertices if -1 not in line
+# 	]
+#
+# 	# pts = MultiPoint([Point(i) for i in points])
+# 	# mask = pts.convex_hull.union(pts.buffer(10, resolution=1, cap_style=3))
+# 	# return MultiPolygon([poly.intersection(mask) for poly in polygonize(lines)])
+#
+# 	convex_hull = MultiPoint([Point(i) for i in points]).convex_hull.buffer(1)
+# 	return MultiPolygon([poly.intersection(convex_hull) for poly in polygonize(lines)])
 
 
 def create_wave(height, depth, color, depth_max=3.0):

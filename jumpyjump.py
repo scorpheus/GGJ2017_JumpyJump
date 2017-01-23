@@ -9,7 +9,7 @@ gs.LoadPlugins()
 # gs.SetDefaultLogOutputLevelMask(gs.LogLevelAll)
 
 plus = gs.GetPlus()
-plus.CreateWorkers()
+# plus.CreateWorkers()
 plus.AudioInit()
 
 plus.RenderInit(1920, 1080, 8, gs.Window.Windowed, False)
